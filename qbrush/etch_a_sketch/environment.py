@@ -59,7 +59,7 @@ class EtchASketchEnvironment(QBrushEnvironment):
         canvas_features = self.get_image_features(self.image_arr)
         err = np.square(self.target_features - canvas_features).sum()
         reward = -1.
-        if not self.last_err is None and err <= self.last_err:
+        if not self.last_err is None and err < self.last_err:
             reward = 1.
         self.last_err = err
         return reward

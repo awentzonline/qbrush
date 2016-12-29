@@ -29,7 +29,7 @@ class QAgent(object):
         for epoch_i in range(num_epochs):
             for batch_i in tqdm(num_batches_per_epoch):
                 state, new_q = self.get_training_batch(batch_size)
-                self.model.train_on_batch(state, new_q)
+                self.model.train_on_batch(state, new_q, verbose=True)
 
     def train_step(self, s, a, r, s1):
         q0 = self.q(s)

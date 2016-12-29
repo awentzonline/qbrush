@@ -15,7 +15,7 @@ if __name__ == '__main__':
     environment_class.add_to_arg_parser(arg_parser)
     arg_parser.add_argument('target_image')
     arg_parser.add_argument('--discount', default=0.9)
-    arg_parser.add_argument('--episodes', default=10000)
+    arg_parser.add_argument('--episodes', default=1000)
     arg_parser.add_argument('--epsilon', default=1.0)
     config = arg_parser.parse_args()
     # load target image

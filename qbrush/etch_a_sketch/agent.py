@@ -29,7 +29,6 @@ class EtchASketchAgent(QAgent):
         y = Dense(256)(y)
         y = LeakyReLU()(y)
         y = Dense(self.num_actions)(y)
-        y = Activation('softmax')(y)
         self.model = Model([position_in, canvas_in, target_in], y)
         self.model.compile(optimizer='adam', loss='categorical_crossentropy')
         print self.model.summary()

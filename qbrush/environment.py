@@ -68,7 +68,8 @@ class QBrushEnvironment(object):
             if last_state and np.random.uniform(0., 1.) < 0.5:
                 agent.train_step(last_state, action, reward, this_state)
             last_state = this_state
-            self.save_image_state('doop.png')
+            if np.random.uniform(0., 1.) < 0.1:
+                self.save_image_state('output.png')
             if self.is_complete:
                 break
 

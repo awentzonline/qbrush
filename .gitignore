@@ -7,3 +7,4 @@ scripts/out/*
 venv
 MANIFEST
 dist/
+output/

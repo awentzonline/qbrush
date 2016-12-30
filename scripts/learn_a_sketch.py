@@ -1,6 +1,7 @@
 import argparse
 import os
 
+import numpy as np
 from keras.preprocessing.image import img_to_array
 from PIL import Image
 
@@ -20,6 +21,7 @@ if __name__ == '__main__':
     arg_parser.add_argument('--epsilon', type=float, default=1.0)
     arg_parser.add_argument('--min-epsilon', type=float, default=0.1)
     arg_parser.add_argument('--epochs', type=int, default=50)
+    arg_parser.add_argument('--num-canvases', type=int, default=3)
     arg_parser.add_argument('--output-path', type=str, default='./output')
     config = arg_parser.parse_args()
 
@@ -27,7 +29,8 @@ if __name__ == '__main__':
     target_image = Image.open(config.target_image)
     target_image = target_image.resize((config.width, config.height))
     target_image = target_image.convert('L').convert('RGB')
-    target_image_arr = img_to_array(target_image)
+    target_image_arr = img_to_array(target_image)[None, ...]
+    target_image_arr = np.repeat(target_image_arr, config.num_canvases, axis=0)
     #target_image.save('grey_input.jpg')
     print('creating environment')
     environment = environment_class(target_image_arr, config)
@@ -46,5 +49,5 @@ if __name__ == '__main__':
             environment.reset()
             epsilon = max(config.min_epsilon, epsilon - d_epsilon)
         environment.simulate(agent, epsilon=config.min_epsilon, train_p=0.)
-        environment.save_image_state('epoch_{}.png'.format(epoch_i))
+        environment.save_image_state('epoch_{}'.format(epoch_i))
         environment.reset()

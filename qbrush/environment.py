@@ -14,7 +14,8 @@ from .argparse_utils import CommaSplitAction
 class QBrushEnvironment(object):
     actions = []
 
-    def __init__(self, config):
+    def __init__(self, config, num_canvases=1):
+        self.num_canvases = num_canvases
         self.config = config
         self._prepare_vgg()
         self.reset()
@@ -22,9 +23,9 @@ class QBrushEnvironment(object):
     def reset(self):
         self.canvases = [
             Image.new('RGB', self.image_size, self.config.blank_color)
-            for _ in range(16)
+            for _ in range(self.num_canvases)
         ]
-        self.image = Image.new('RGB', self.image_size, self.config.blank_color)
+        self.image_arr = np.zeros((self.num_canvases,) + self.image_shape)
         self.update_image_array()
         self.is_complete = False
 
@@ -53,21 +54,22 @@ class QBrushEnvironment(object):
             return (3, self.config.height, self.config.width)
 
     def update_image_array(self):
-        self.image_arr = img_to_array(self.image)
+        for canvas_i, canvas in enumerate(self.canvases):
+            self.image_arr[canvas_i] = img_to_array(canvas)
         #self.image_features = self.get_image_features(self.image_arr)
 
-    def get_image_features(self, image):
-        image = vgg16.preprocess_input(image[None, ...])
-        return self.vgg_features.predict(image)
+    def get_image_features(self, images):
+        images = vgg16.preprocess_input(images)
+        return self.vgg_features.predict(images)
 
     def simulate(self, agent, max_steps=1000, epsilon=0.5, train_p=0.0):
         self.is_complete = False
         last_state = None
         for step_i in tqdm(range(max_steps)):
             if np.random.uniform(0, 1) < epsilon:
-                action = np.random.randint(0, self.num_actions)
+                action = np.random.randint(0, self.num_actions, (self.num_canvases,))
             else:
-                action = agent.policy(self.get_state())[0]
+                action = agent.policy(self.get_state())
             self.perform_action(action)
             self.update_image_array()
             reward = self.calculate_reward()
@@ -76,22 +78,28 @@ class QBrushEnvironment(object):
                 agent.train_step(last_state, action, reward, this_state)
             last_state = this_state
             if np.random.uniform(0., 1.) < 0.1:
-                self.save_image_state('output.png')
+                self.save_image_state('output')
             if self.is_complete:
                 break
 
-    def perform_action(self, action):
-        action_name = self.actions[action]
-        getattr(self, 'perform_{}'.format(action_name))()
+    def perform_action(self, actions):
+        for canvas_i in range(self.num_canvases):
+            action_name = self.actions[actions[canvas_i]]
+            getattr(self, 'perform_{}'.format(action_name))(canvas_i)
 
     def get_state(self):
         return self.image_arr
 
     def calculate_reward(self):
-        return -1
+        return [-1] * self.num_canvases
 
     def save_image_state(self, filename):
-        self.image.save(os.path.join(self.config.output_path, filename))
+        for canvas_i, canvas in enumerate(self.canvases):
+            canvas.save(
+                os.path.join(
+                    self.config.output_path, filename + '_{}.png'.format(canvas_i)
+                )
+            )
 
     @classmethod
     def add_to_arg_parser(cls, parser):

@@ -37,7 +37,7 @@ class QAgent(object):
         max_q1 = np.max(q1, axis=1)
         new_q = np.copy(q0)
         new_q[np.arange(new_q.shape[0]), a] = r + self.discount * max_q1
-        self.model.train_on_batch(s, new_q)
+        return self.model.train_on_batch(s, new_q)
 
     def get_training_batch(self, size):
         state, action, reward, next_state = self.sample_memory(size)

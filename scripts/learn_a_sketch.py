@@ -21,7 +21,8 @@ if __name__ == '__main__':
     arg_parser.add_argument('--epsilon', type=float, default=1.0)
     arg_parser.add_argument('--min-epsilon', type=float, default=0.1)
     arg_parser.add_argument('--epochs', type=int, default=50)
-    arg_parser.add_argument('--sim-steps', type=int, default=1000)
+    arg_parser.add_argument('--sim-steps', type=int, default=300)
+    arg_parser.add_argument('--learn-steps', type=int, default=100)
     arg_parser.add_argument('--num-canvases', type=int, default=3)
     arg_parser.add_argument('--output-path', type=str, default='./output')
     config = arg_parser.parse_args()
@@ -46,9 +47,12 @@ if __name__ == '__main__':
         print('epoch {}'.format(epoch_i))
         for episode_i in range(config.episodes):
             print('episode {}.{} / epsilon = {}'.format(epoch_i, episode_i, epsilon))
-            environment.simulate(
-                agent, epsilon=epsilon, train_p=0.5, max_steps=config.sim_steps
+            history = environment.simulate(
+                agent, epsilon=epsilon, train_p=0.5, max_steps=config.learn_steps
             )
+            print('Loss: min: {} mean: {} max: {}'.format(
+                np.min(history), np.mean(history), np.max(history)
+            ))
             environment.reset()
             epsilon = max(config.min_epsilon, epsilon - d_epsilon)
         environment.simulate(

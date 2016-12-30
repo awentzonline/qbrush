@@ -66,6 +66,7 @@ class QBrushEnvironment(object):
     def simulate(self, agent, max_steps=1000, epsilon=0.5, train_p=0.0):
         self.is_complete = False
         last_state = None
+        history = []
         for step_i in tqdm(range(max_steps)):
             if np.random.uniform(0, 1) < epsilon:
                 action = np.random.randint(0, self.num_actions, (self.num_canvases,))
@@ -76,12 +77,14 @@ class QBrushEnvironment(object):
             reward = self.calculate_reward()
             this_state = self.get_state()
             if last_state and np.random.uniform(0., 1.) < train_p:
-                agent.train_step(last_state, action, reward, this_state)
+                loss = agent.train_step(last_state, action, reward, this_state)
+                history.append(loss)
             last_state = this_state
             if np.random.uniform(0., 1.) < 0.1:
                 self.save_image_state('output.png')
             if self.is_complete:
                 break
+        return history
 
     def perform_action(self, actions):
         for canvas_i in range(self.num_canvases):

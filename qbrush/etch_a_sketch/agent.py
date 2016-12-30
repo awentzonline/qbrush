@@ -1,5 +1,5 @@
 from keras.layers import (
-    Activation, Convolution2D, Dense, Flatten, Input, LeakyReLU, merge
+    Activation, Convolution2D, Dense, Dropout, Flatten, Input, LeakyReLU, merge
 )
 from keras.models import Model, Sequential
 from keras.optimizers import Adam
@@ -11,23 +11,20 @@ class EtchASketchAgent(QAgent):
         # input: position, canvas, target
         # position
         p = position_in = Input(shape=(2,))
-        # canvas and target
-        conv = Sequential()
-        conv.add(Convolution2D(64, 3, 3, subsample=(2, 2), border_mode='same', input_shape=self.canvas_shape))
-        conv.add(LeakyReLU())
-        conv.add(Convolution2D(64, 3, 3, subsample=(2, 2), border_mode='same'))
-        conv.add(LeakyReLU())
-        conv.add(Convolution2D(64, 3, 3, subsample=(2, 2), border_mode='same'))
-        conv.add(LeakyReLU())
         canvas_in = Input(shape=self.canvas_shape)
         target_in = Input(shape=self.canvas_shape)
-        c = conv(canvas_in)
-        t = conv(target_in)
-        c = Flatten()(c)
-        t = Flatten()(t)
+        merged_inputs = merge([canvas_in, target_in], mode='concat')
+        x = Convolution2D(64, 3, 3, subsample=(2, 2), border_mode='same')(merged_inputs)
+        x = LeakyReLU()(x)
+        x = Convolution2D(64, 3, 3, subsample=(2, 2), border_mode='same')(x)
+        x = LeakyReLU()(x)
+        x = Convolution2D(64, 3, 3, subsample=(2, 2), border_mode='same')(x)
+        x = LeakyReLU()(x)
+        x = Flatten()(x)
         # combine
-        y = merge([p, c, t], mode='concat')
+        y = merge([p, x], mode='concat')
         y = Dense(256)(y)
+        y = Dropout(0.3)(y)
         y = LeakyReLU()(y)
         y = Dense(self.num_actions)(y)
         self.model = Model([position_in, canvas_in, target_in], y)

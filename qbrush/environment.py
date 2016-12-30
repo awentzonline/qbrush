@@ -1,3 +1,5 @@
+import os
+
 import numpy as np
 from keras import backend as K
 from keras.applications import vgg16
@@ -18,6 +20,10 @@ class QBrushEnvironment(object):
         self.reset()
 
     def reset(self):
+        self.canvases = [
+            Image.new('RGB', self.image_size, self.config.blank_color)
+            for _ in range(16)
+        ]
         self.image = Image.new('RGB', self.image_size, self.config.blank_color)
         self.update_image_array()
         self.is_complete = False
@@ -54,7 +60,7 @@ class QBrushEnvironment(object):
         image = vgg16.preprocess_input(image[None, ...])
         return self.vgg_features.predict(image)
 
-    def simulate(self, agent, max_steps=1000, epsilon=0.5):
+    def simulate(self, agent, max_steps=1000, epsilon=0.5, train_p=0.0):
         self.is_complete = False
         last_state = None
         for step_i in tqdm(range(max_steps)):
@@ -66,7 +72,7 @@ class QBrushEnvironment(object):
             self.update_image_array()
             reward = self.calculate_reward()
             this_state = self.get_state()
-            if last_state and np.random.uniform(0., 1.) < 0.5:
+            if last_state and np.random.uniform(0., 1.) < train_p:
                 agent.train_step(last_state, action, reward, this_state)
             last_state = this_state
             if np.random.uniform(0., 1.) < 0.1:
@@ -85,7 +91,7 @@ class QBrushEnvironment(object):
         return -1
 
     def save_image_state(self, filename):
-        self.image.save(filename)
+        self.image.save(os.path.join(self.config.output_path, filename))
 
     @classmethod
     def add_to_arg_parser(cls, parser):

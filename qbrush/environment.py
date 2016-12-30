@@ -51,7 +51,8 @@ class QBrushEnvironment(object):
         #self.image_features = self.get_image_features(self.image_arr)
 
     def get_image_features(self, image):
-        return self.vgg_features.predict(image[None, ...])
+        image = vgg16.preprocess_input(image[None, ...])
+        return self.vgg_features.predict(image)
 
     def simulate(self, agent, max_steps=1000, epsilon=0.5):
         self.is_complete = False

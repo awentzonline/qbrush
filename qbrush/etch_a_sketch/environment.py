@@ -46,7 +46,7 @@ class EtchASketchEnvironment(QBrushEnvironment):
         self.position[canvas_id][0] += dx
         self.position[canvas_id][1] += dy
         self.position[canvas_id] = self.position[canvas_id].clip(0.0, 1.0)
-        image_size = canvas.size
+        image_size = np.array(canvas.size) - 1
         draw = ImageDraw.Draw(canvas)
         draw.line([tuple(start * image_size), tuple(self.position[canvas_id] * image_size)])
 

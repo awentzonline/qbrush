@@ -2,7 +2,7 @@ from keras.layers import (
     Activation, Convolution2D, Dense, Dropout, Flatten, Input, LeakyReLU, merge
 )
 from keras.models import Model, Sequential
-from keras.optimizers import Adam
+from keras.optimizers import Adam, RMSprop
 from qbrush.agent import QAgent
 
 
@@ -28,6 +28,6 @@ class EtchASketchAgent(QAgent):
         y = LeakyReLU()(y)
         y = Dense(self.num_actions)(y)
         self.model = Model([position_in, canvas_in, target_in], y)
-        optimizer = Adam()
+        optimizer = RMSprop()
         self.model.compile(optimizer=optimizer, loss='mse')
         print self.model.summary()

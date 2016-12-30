@@ -14,8 +14,8 @@ if __name__ == '__main__':
     arg_parser = argparse.ArgumentParser('QBrush')
     environment_class.add_to_arg_parser(arg_parser)
     arg_parser.add_argument('target_image')
-    arg_parser.add_argument('--discount', default=0.9)
-    arg_parser.add_argument('--episodes', default=1000)
+    arg_parser.add_argument('--discount', type=float, default=0.9)
+    arg_parser.add_argument('--episodes', type=int, default=1000)
     arg_parser.add_argument('--epsilon', type=float, default=1.0)
     config = arg_parser.parse_args()
     # load target image

@@ -21,6 +21,7 @@ if __name__ == '__main__':
     arg_parser.add_argument('--epsilon', type=float, default=1.0)
     arg_parser.add_argument('--min-epsilon', type=float, default=0.1)
     arg_parser.add_argument('--epochs', type=int, default=50)
+    arg_parser.add_argument('--sim-steps', type=int, default=1000)
     arg_parser.add_argument('--num-canvases', type=int, default=3)
     arg_parser.add_argument('--output-path', type=str, default='./output')
     config = arg_parser.parse_args()
@@ -45,9 +46,14 @@ if __name__ == '__main__':
         print('epoch {}'.format(epoch_i))
         for episode_i in range(config.episodes):
             print('episode {}.{} / epsilon = {}'.format(epoch_i, episode_i, epsilon))
-            environment.simulate(agent, epsilon=epsilon, train_p=0.5)
+            environment.simulate(
+                agent, epsilon=epsilon, train_p=0.5, max_steps=config.sim_steps
+            )
             environment.reset()
             epsilon = max(config.min_epsilon, epsilon - d_epsilon)
-        environment.simulate(agent, epsilon=config.min_epsilon, train_p=0.)
-        environment.save_image_state('epoch_{}'.format(epoch_i))
+        environment.simulate(
+            agent, epsilon=config.min_epsilon, train_p=0.,
+            max_steps=config.sim_steps
+        )
+        environment.save_image_state('epoch_{}.png'.format(epoch_i))
         environment.reset()

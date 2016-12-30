@@ -9,6 +9,7 @@ from PIL import Image, ImageDraw
 from tqdm import tqdm
 
 from .argparse_utils import CommaSplitAction
+from .image_utils import save_image_grid
 
 
 class QBrushEnvironment(object):
@@ -78,7 +79,7 @@ class QBrushEnvironment(object):
                 agent.train_step(last_state, action, reward, this_state)
             last_state = this_state
             if np.random.uniform(0., 1.) < 0.1:
-                self.save_image_state('output')
+                self.save_image_state('output.png')
             if self.is_complete:
                 break
 
@@ -94,12 +95,9 @@ class QBrushEnvironment(object):
         return [-1] * self.num_canvases
 
     def save_image_state(self, filename):
-        for canvas_i, canvas in enumerate(self.canvases):
-            canvas.save(
-                os.path.join(
-                    self.config.output_path, filename + '_{}.png'.format(canvas_i)
-                )
-            )
+        save_image_grid(
+            self.canvases, os.path.join(self.config.output_path, filename)
+        )
 
     @classmethod
     def add_to_arg_parser(cls, parser):

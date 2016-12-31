@@ -18,9 +18,7 @@ class EtchASketchEnvironment(QBrushEnvironment):
     ]
     move_size = 0.05
 
-    def __init__(self, target_images, *args, **kwargs):
-        kwargs['num_canvases'] = target_images.shape[0]
-        super(EtchASketchEnvironment, self).__init__(*args, **kwargs)
+    def update_targets(self, target_images):
         self.target_images = target_images
         self.target_features = self.get_image_features(target_images)
 

@@ -5,8 +5,10 @@ import numpy as np
 from keras.preprocessing.image import img_to_array
 from PIL import Image
 
+from qbrush import image_preprocessors
 from qbrush.etch_a_sketch.agent import EtchASketchAgent
 from qbrush.etch_a_sketch.environment import EtchASketchEnvironment
+from qbrush.image_dataset import ImageDataset
 
 
 if __name__ == '__main__':
@@ -27,15 +29,14 @@ if __name__ == '__main__':
     arg_parser.add_argument('--output-path', type=str, default='./output')
     config = arg_parser.parse_args()
 
-    # load target image
-    target_image = Image.open(config.target_image)
-    target_image = target_image.resize((config.width, config.height))
-    target_image = target_image.convert('L').convert('RGB')
-    target_image_arr = img_to_array(target_image)[None, ...]
-    target_image_arr = np.repeat(target_image_arr, config.num_canvases, axis=0)
+    image_dataset = ImageDataset(config.target_image, preprocessors=[
+        image_preprocessors.greyscale,
+        image_preprocessors.resize((config.width, config.height))
+    ])
+    image_dataset.save_grid(os.path.join(config.output_path, 'dataset_sample.png'))
     #target_image.save('grey_input.jpg')
     print('creating environment')
-    environment = environment_class(target_image_arr, config)
+    environment = environment_class(config, num_canvases=config.num_canvases)
     print('creating agent')
     agent = agent_class(
         environment.image_shape, environment.num_actions, discount=config.discount
@@ -47,6 +48,7 @@ if __name__ == '__main__':
         print('epoch {}'.format(epoch_i))
         for episode_i in range(config.episodes):
             print('episode {}.{} / epsilon = {}'.format(epoch_i, episode_i, epsilon))
+            environment.update_targets(image_dataset.get_batch(config.num_canvases))
             history = environment.simulate(
                 agent, epsilon=epsilon, train_p=0.5, max_steps=config.learn_steps
             )

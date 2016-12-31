@@ -24,7 +24,7 @@ def save_image_array_grid(samples, filename):
         num_samples, img_height, img_width, img_channels = samples.shape
     else:
         num_samples, img_channels, img_height, img_width = samples.shape
-    num_wide = int(np.sqrt(num_samples))
+    num_wide = int(np.ceil(np.sqrt(num_samples)))
     num_heigh = int(np.ceil(num_samples / num_wide))
     width = num_wide * img_width
     height = num_heigh * img_height

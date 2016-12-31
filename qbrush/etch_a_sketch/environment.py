@@ -6,6 +6,7 @@ from keras.preprocessing.image import img_to_array
 from PIL import Image, ImageDraw
 
 from qbrush.environment import QBrushEnvironment
+from qbrush.image_utils import save_image_array_grid
 
 
 class EtchASketchEnvironment(QBrushEnvironment):
@@ -26,6 +27,7 @@ class EtchASketchEnvironment(QBrushEnvironment):
     def reset(self):
         super(EtchASketchEnvironment, self).reset()
         self.position = np.random.uniform(0., 1., (self.num_canvases, 2))
+        self.position_maps = np.zeros((self.num_canvases,) + self.image_shape_dims)
         self.last_err = None
 
     def perform_move_up(self, canvas_id):
@@ -49,13 +51,36 @@ class EtchASketchEnvironment(QBrushEnvironment):
         image_size = np.array(canvas.size) - 1
         draw = ImageDraw.Draw(canvas)
         draw.line([tuple(start * image_size), tuple(self.position[canvas_id] * image_size)])
+        self._update_position_maps()
 
     def get_state(self):
         return [
-            self.position,
+            self._expanded_position_maps(),
             self.image_arr,
             self.target_images,
         ]
+
+    def _expanded_position_maps(self):
+        axis = -1
+        if K.image_dim_ordering() == 'th':
+            axis = 1
+        pms = np.expand_dims(self.position_maps, axis)
+        return pms * 255.
+
+    def _update_position_maps(self):
+        self.position_maps *= self.config.position_decay
+        grid_shape = np.array(self.position_maps.shape[1:]) - 1
+        indexes = (self.position[:, ::-1] * grid_shape).astype(np.int32)
+        indexes = tuple(indexes.transpose((1,0)))
+        indexes = (np.arange(self.position_maps.shape[0]),) + indexes
+        self.position_maps[indexes] = 1.
+        if np.random.uniform(0., 1.) < 0.:
+            axis = -1
+            if K.image_dim_ordering() == 'th':
+                axis = 1
+            pms = np.repeat(self._expanded_position_maps(), 3, axis=axis)
+            samples = np.concatenate([pms, self.image_arr + 120.], axis=0)
+            save_image_array_grid(samples, 'positions.png')
 
     def calculate_reward(self):
         canvas_features = self.get_image_features(self.image_arr)
@@ -65,3 +90,8 @@ class EtchASketchEnvironment(QBrushEnvironment):
             reward[err < self.last_err] = 1.
         self.last_err = err
         return reward
+
+    @classmethod
+    def add_to_arg_parser(cls, parser):
+        super(EtchASketchEnvironment, cls).add_to_arg_parser(parser)
+        parser.add_argument('--position-decay', type=float, default=0.8)

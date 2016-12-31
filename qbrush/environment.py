@@ -54,6 +54,10 @@ class QBrushEnvironment(object):
         else:
             return (3, self.config.height, self.config.width)
 
+    @property
+    def image_shape_dims(self):
+        return (self.config.height, self.config.width)
+
     def update_image_array(self):
         for canvas_i, canvas in enumerate(self.canvases):
             self.image_arr[canvas_i] = img_to_array(canvas)

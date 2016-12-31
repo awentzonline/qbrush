@@ -29,11 +29,14 @@ if __name__ == '__main__':
     arg_parser.add_argument('--output-path', type=str, default='./output')
     config = arg_parser.parse_args()
 
+    print('loading images from {}'.format(config.target_image))
     image_dataset = ImageDataset(config.target_image, preprocessors=[
         image_preprocessors.greyscale,
         image_preprocessors.resize((config.width, config.height))
     ])
-    image_dataset.save_grid(os.path.join(config.output_path, 'dataset_sample.png'))
+    image_dataset.save_grid(
+        os.path.join(config.output_path, 'dataset_sample.png')
+    )
     #target_image.save('grey_input.jpg')
     print('creating environment')
     environment = environment_class(config, num_canvases=config.num_canvases)
@@ -48,7 +51,9 @@ if __name__ == '__main__':
         print('epoch {}'.format(epoch_i))
         for episode_i in range(config.episodes):
             print('episode {}.{} / epsilon = {}'.format(epoch_i, episode_i, epsilon))
-            environment.update_targets(image_dataset.get_batch(config.num_canvases))
+            environment.update_targets(
+                image_dataset.get_batch(config.num_canvases)
+            )
             history = environment.simulate(
                 agent, epsilon=epsilon, train_p=0.5, max_steps=config.learn_steps
             )

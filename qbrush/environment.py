@@ -22,8 +22,12 @@ class QBrushEnvironment(object):
         self.reset()
 
     def reset(self):
+        if self.config.channels == 3:
+            mode = 'RGB'
+        else:
+            mode = 'L'
         self.canvases = [
-            Image.new('RGB', self.image_size, self.config.blank_color)
+            Image.new(mode, self.image_size, self.config.blank_color)
             for _ in range(self.num_canvases)
         ]
         self.image_arr = np.zeros((self.num_canvases,) + self.image_shape)
@@ -31,7 +35,7 @@ class QBrushEnvironment(object):
         self.is_complete = False
 
     def _prepare_vgg(self):
-        vgg = vgg16.VGG16(include_top=False, input_shape=self.image_shape)
+        vgg = vgg16.VGG16(include_top=False, input_shape=self.vgg_image_shape)
         outputs = []
         for layer_name in self.config.feature_layers:
             layer = vgg.get_layer(layer_name)
@@ -50,6 +54,13 @@ class QBrushEnvironment(object):
     @property
     def image_shape(self):
         if K.image_dim_ordering() == 'tf':
+            return (self.config.height, self.config.width, self.config.channels)
+        else:
+            return (self.config.channels, self.config.height, self.config.width)
+
+    @property
+    def vgg_image_shape(self):
+        if K.image_dim_ordering() == 'tf':
             return (self.config.height, self.config.width, 3)
         else:
             return (3, self.config.height, self.config.width)
@@ -64,6 +75,12 @@ class QBrushEnvironment(object):
         #self.image_features = self.get_image_features(self.image_arr)
 
     def get_image_features(self, images):
+        if K.image_dim_ordering() == 'tf':
+            axis = -1
+        else:
+            axis = 1
+        if images.shape[axis] == 1:
+            images = np.repeat(images, 3, axis=axis)
         images = vgg16.preprocess_input(images)
         return self.vgg_features.predict(images)
 
@@ -99,7 +116,7 @@ class QBrushEnvironment(object):
         return self.image_arr
 
     def calculate_reward(self):
-        return [-1] * self.num_canvases
+        return np.array([-1] * self.num_canvases)
 
     def save_image_state(self, filename):
         save_image_grid(
@@ -110,6 +127,7 @@ class QBrushEnvironment(object):
     def add_to_arg_parser(cls, parser):
         parser.add_argument('--width', type=int, default=64)
         parser.add_argument('--height', type=int, default=64)
+        parser.add_argument('--channels', type=int, default=3)
         parser.add_argument('--blank-color', default='black')
         parser.add_argument(
             '--feature-layers', type=CommaSplitAction,

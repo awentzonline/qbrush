@@ -32,11 +32,13 @@ if __name__ == '__main__':
     print('loading images from {}'.format(config.target_image))
     image_dataset = ImageDataset(config.target_image, preprocessors=[
         image_preprocessors.greyscale,
+        #image_preprocessors.rgb,
         image_preprocessors.resize((config.width, config.height))
     ])
     image_dataset.save_grid(
         os.path.join(config.output_path, 'dataset_sample.png')
     )
+    config.channels = image_dataset.num_channels
     #target_image.save('grey_input.jpg')
     print('creating environment')
     environment = environment_class(config, num_canvases=config.num_canvases)

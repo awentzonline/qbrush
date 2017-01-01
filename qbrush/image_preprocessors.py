@@ -2,7 +2,11 @@ from PIL import Image
 
 
 def greyscale(image):
-    return image.convert('L').convert('RGB')
+    return image.convert('L')
+
+
+def rgb(image):
+    return image.convert('RGB')
 
 
 def resize(new_size):

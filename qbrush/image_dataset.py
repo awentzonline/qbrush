@@ -1,6 +1,7 @@
 import glob
 
 import numpy as np
+from keras import backend as K
 from keras.preprocessing.image import img_to_array, load_img
 
 from .image_utils import save_image_array_grid
@@ -39,6 +40,13 @@ class ImageDataset(object):
     @property
     def image_shape(self):
         return self.image_data.shape[1:]
+
+    @property
+    def num_channels(self):
+        axis = -1
+        if K.image_dim_ordering() == 'th':
+            axis = 1
+        return self.image_shape[axis]
 
     def save_grid(self, filename, items=16):
         save_image_array_grid(self.get_batch(items), filename)

@@ -33,7 +33,7 @@ class EtchASketchAgent(QAgent):
         y = LeakyReLU()(y)
         y = Dense(self.num_actions)(y)
         self.model = Model([position_in, canvas_in, target_in], y)
-        optimizer = RMSprop(lr=0.0001, rho=0.99)
+        optimizer = RMSprop(lr=0.0001, rho=0.99, clipnorm=10.)
         self.model.compile(optimizer=optimizer, loss='mse')
         print self.model.summary()
 
@@ -76,6 +76,6 @@ class EtchASketchAdvantageAgent(EtchASketchAgent):
 
         q = merge([v, a], mode='sum')
         self.model = Model([position_in, canvas_in, target_in], q)
-        optimizer = RMSprop(lr=0.0001, rho=0.99)
+        optimizer = RMSprop(lr=0.0001, rho=0.99, clipnorm=10.)
         self.model.compile(optimizer=optimizer, loss='mse')
         print self.model.summary()

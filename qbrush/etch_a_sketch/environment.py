@@ -48,7 +48,9 @@ class EtchASketchEnvironment(QBrushEnvironment):
         self.position[canvas_id] = self.position[canvas_id].clip(0.0, 1.0)
         image_size = np.array(canvas.size) - 1
         draw = ImageDraw.Draw(canvas)
-        draw.line([tuple(start * image_size), tuple(self.position[canvas_id] * image_size)])
+        draw.line(
+            [tuple(start * image_size), tuple(self.position[canvas_id] * image_size)],
+            self.config.color)
         self._update_position_maps()
 
     def get_state(self):
@@ -93,3 +95,4 @@ class EtchASketchEnvironment(QBrushEnvironment):
     def add_to_arg_parser(cls, parser):
         super(EtchASketchEnvironment, cls).add_to_arg_parser(parser)
         parser.add_argument('--position-decay', type=float, default=0.8)
+        parser.add_argument('--color', default='white')

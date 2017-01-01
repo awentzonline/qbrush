@@ -79,3 +79,8 @@ class EtchASketchAdvantageAgent(EtchASketchAgent):
         optimizer = RMSprop(lr=0.0000625, rho=0.99, clipnorm=10.)
         self.model.compile(optimizer=optimizer, loss='mse')
         print self.model.summary()
+
+    def model_custom_objects(self, **kwargs):
+        return super(EtchASketchAdvantageAgent, self).model_custom_objects(
+            AdvantageAggregator=AdvantageAggregator, **kwargs
+        )

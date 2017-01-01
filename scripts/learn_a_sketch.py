@@ -27,6 +27,9 @@ if __name__ == '__main__':
     arg_parser.add_argument('--learn-steps', type=int, default=100)
     arg_parser.add_argument('--num-canvases', type=int, default=3)
     arg_parser.add_argument('--output-path', type=str, default='./output')
+    arg_parser.add_argument('--ignore-existing', action='store_true')
+    arg_parser.add_argument('--model-name', default='eas_agent')
+    arg_parser.add_argument('--save-rate', type=int, default=10)
     config = arg_parser.parse_args()
 
     print('loading images from {}'.format(config.target_image))
@@ -44,7 +47,8 @@ if __name__ == '__main__':
     environment = environment_class(config, num_canvases=config.num_canvases)
     print('creating agent')
     agent = agent_class(
-        environment.image_shape, environment.num_actions, discount=config.discount
+        environment.image_shape, environment.num_actions, discount=config.discount,
+        ignore_existing=config.ignore_existing, name=config.model_name
     )
     print('simulating...')
     epsilon = config.epsilon
@@ -62,6 +66,8 @@ if __name__ == '__main__':
             print('Loss: min: {} mean: {} max: {}'.format(
                 np.min(history), np.mean(history), np.max(history)
             ))
+            if (episode_i + 1) % config.save_rate == 0:
+                agent.save_model()
             environment.reset()
             epsilon = max(config.min_epsilon, epsilon - d_epsilon)
         environment.simulate(

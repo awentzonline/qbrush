@@ -6,19 +6,19 @@ from keras.preprocessing.image import img_to_array
 from PIL import Image
 
 from qbrush import image_preprocessors
-from qbrush.etch_a_sketch.agent import EtchASketchAgent
+from qbrush.etch_a_sketch.agent import EtchASketchAgent, EtchASketchAdvantageAgent
 from qbrush.etch_a_sketch.environment import EtchASketchEnvironment
 from qbrush.image_dataset import ImageDataset
 
 
 if __name__ == '__main__':
-    agent_class = EtchASketchAgent
+    agent_class = EtchASketchAdvantageAgent  #EtchASketchAgent
     environment_class = EtchASketchEnvironment
     # get config
     arg_parser = argparse.ArgumentParser('QBrush')
     environment_class.add_to_arg_parser(arg_parser)
     arg_parser.add_argument('target_image')
-    arg_parser.add_argument('--discount', type=float, default=0.9)
+    arg_parser.add_argument('--discount', type=float, default=0.95)
     arg_parser.add_argument('--episodes', type=int, default=5)
     arg_parser.add_argument('--epsilon', type=float, default=1.0)
     arg_parser.add_argument('--min-epsilon', type=float, default=0.1)

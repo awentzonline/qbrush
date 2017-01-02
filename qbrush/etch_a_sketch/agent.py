@@ -71,13 +71,14 @@ class EtchASketchAdvantageAgent(EtchASketchAgent):
         v = Dropout(0.3)(v)
         v = LeakyReLU()(v)
         v = Dense(self.num_actions)(v)
+
         a = Dense(256)(x)
         a = Dropout(0.3)(a)
         a = LeakyReLU()(a)
         a = Dense(self.num_actions)(a)
-        a = AdvantageAggregator()(a)
 
-        q = merge([v, a], mode='sum')
+        q = AdvantageAggregator()([v, a])
+
         self.model = Model([position_in, canvas_in, target_in], q)
         optimizer = RMSprop(lr=0.0000625, rho=0.99, clipnorm=10.)
         self.model.compile(optimizer=optimizer, loss='mse')
@@ -120,15 +121,14 @@ class EtchASketchFCAdvantageAgent(EtchASketchAgent):
         v = LeakyReLU()(v)
         v = Convolution2D(1, 1, 1, border_mode='same')(v)
         v = GlobalAveragePooling2D()(v)
-        v = BroadcastDim(self.num_actions)(v)
 
         a = Convolution2D(256, fc_kernel_size, fc_kernel_size, border_mode='same')(x)
         a = LeakyReLU()(a)
         a = Convolution2D(self.num_actions, 1, 1, border_mode='same')(a)
         a = GlobalAveragePooling2D()(a)
-        a = AdvantageAggregator()(a)
 
-        q = merge([v, a], mode='sum')
+        q = AdvantageAggregator()([v, a])
+
         self.model = Model([position_in, canvas_in, target_in], q)
         optimizer = RMSprop(lr=0.0000625, rho=0.99, clipnorm=10.)
         self.model.compile(optimizer=optimizer, loss='mse')

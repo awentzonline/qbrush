@@ -7,6 +7,7 @@ from keras.models import Model, Sequential
 from keras.optimizers import RMSprop
 from qbrush.advantage import AdvantageAggregator
 from qbrush.agent import QAgent
+from qbrush.layers import ImageNetMean
 
 
 class EtchASketchAgent(QAgent):
@@ -17,6 +18,7 @@ class EtchASketchAgent(QAgent):
         canvas_in = Input(shape=self.canvas_shape)
         target_in = Input(shape=self.canvas_shape)
         merged_inputs = merge([position_in, canvas_in, target_in], mode='concat')
+
         x = Convolution2D(
             32, kernel_size, kernel_size, subsample=(2, 2), border_mode='same')(merged_inputs)
         x = LeakyReLU()(x)
@@ -83,7 +85,9 @@ class EtchASketchAdvantageAgent(EtchASketchAgent):
 
     def model_custom_objects(self, **kwargs):
         return super(EtchASketchAdvantageAgent, self).model_custom_objects(
-            AdvantageAggregator=AdvantageAggregator, **kwargs
+            AdvantageAggregator=AdvantageAggregator,
+            ImageNetMean=ImageNetMean,
+            **kwargs
         )
 
 
@@ -95,7 +99,11 @@ class EtchASketchFCAdvantageAgent(EtchASketchAgent):
         p = position_in = Input(shape=self.position_shape)
         canvas_in = Input(shape=self.canvas_shape)
         target_in = Input(shape=self.canvas_shape)
-        merged_inputs = merge([position_in, canvas_in, target_in], mode='concat')
+        merged_inputs = merge([
+            position_in,
+            ImageNetMean()(canvas_in),
+            ImageNetMean()(target_in)
+        ], mode='concat')
         x = Convolution2D(
             32, kernel_size, kernel_size, subsample=(2, 2), border_mode='same')(merged_inputs)
         x = LeakyReLU()(x)

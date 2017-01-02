@@ -32,7 +32,7 @@ class QBrushEnvironment(object):
         ]
         self.image_arr = np.zeros((self.num_canvases,) + self.image_shape)
         self.update_image_array()
-        self.is_complete = False
+        self.terminal = False
 
     def _prepare_vgg(self):
         vgg = vgg16.VGG16(include_top=False, input_shape=self.vgg_image_shape)
@@ -85,10 +85,11 @@ class QBrushEnvironment(object):
         return self.vgg_features.predict(images)
 
     def simulate(self, agent, max_steps=1000, epsilon=0.5, train_p=0.0):
-        self.is_complete = False
+        self.terminal = False
         last_state = None
         history = []
         for step_i in tqdm(range(max_steps)):
+            self.terminal = step_i == max_steps - 1
             if np.random.uniform(0, 1) < epsilon:
                 action = np.random.randint(0, self.num_actions, (self.num_canvases,))
             else:
@@ -103,8 +104,6 @@ class QBrushEnvironment(object):
             last_state = this_state
             if np.random.uniform(0., 1.) < 0.1:
                 self.save_image_state('output.png')
-            if self.is_complete:
-                break
         return history
 
     def perform_action(self, actions):

@@ -6,13 +6,14 @@ from keras.preprocessing.image import img_to_array
 from PIL import Image
 
 from qbrush import image_preprocessors
-from qbrush.etch_a_sketch.agent import EtchASketchAgent, EtchASketchAdvantageAgent
+from qbrush.etch_a_sketch.agent import (
+    EtchASketchAgent, EtchASketchAdvantageAgent, EtchASketchFCAdvantageAgent)
 from qbrush.etch_a_sketch.environment import EtchASketchEnvironment
 from qbrush.image_dataset import ImageDataset
 
 
 if __name__ == '__main__':
-    agent_class = EtchASketchAdvantageAgent  #EtchASketchAgent
+    agent_class = EtchASketchFCAdvantageAgent #EtchASketchAdvantageAgent  #EtchASketchAgent
     environment_class = EtchASketchEnvironment
     # get config
     arg_parser = argparse.ArgumentParser('QBrush')
@@ -21,7 +22,7 @@ if __name__ == '__main__':
     arg_parser.add_argument('--discount', type=float, default=0.95)
     arg_parser.add_argument('--episodes', type=int, default=5)
     arg_parser.add_argument('--epsilon', type=float, default=1.0)
-    arg_parser.add_argument('--min-epsilon', type=float, default=0.1)
+    arg_parser.add_argument('--min-epsilon', type=float, default=0.05)
     arg_parser.add_argument('--epochs', type=int, default=50)
     arg_parser.add_argument('--sim-steps', type=int, default=300)
     arg_parser.add_argument('--learn-steps', type=int, default=100)
@@ -31,6 +32,7 @@ if __name__ == '__main__':
     arg_parser.add_argument('--model-name', default='eas_agent')
     arg_parser.add_argument('--save-rate', type=int, default=10)
     config = arg_parser.parse_args()
+
 
     print('loading images from {}'.format(config.target_image))
     image_dataset = ImageDataset(config.target_image, preprocessors=[

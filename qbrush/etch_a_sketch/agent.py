@@ -1,13 +1,13 @@
 from keras import backend as K
 from keras.layers import (
     Activation, Convolution2D, Dense, Dropout, Flatten, GlobalAveragePooling2D,
-    Input, LeakyReLU, merge
+    Input, LeakyReLU, merge, RepeatVector
 )
 from keras.models import Model, Sequential
 from keras.optimizers import RMSprop
 from qbrush.advantage import AdvantageAggregator
 from qbrush.agent import QAgent
-from qbrush.layers import ImageNetMean
+from qbrush.layers import BroadcastDim, ImageNetMean
 
 
 class EtchASketchAgent(QAgent):
@@ -87,6 +87,7 @@ class EtchASketchAdvantageAgent(EtchASketchAgent):
         return super(EtchASketchAdvantageAgent, self).model_custom_objects(
             AdvantageAggregator=AdvantageAggregator,
             ImageNetMean=ImageNetMean,
+            BroadcastDim=BroadcastDim,
             **kwargs
         )
 
@@ -117,8 +118,9 @@ class EtchASketchFCAdvantageAgent(EtchASketchAgent):
         # dueling advantage learning
         v = Convolution2D(256, fc_kernel_size, fc_kernel_size, border_mode='same')(x)
         v = LeakyReLU()(v)
-        v = Convolution2D(self.num_actions, 1, 1, border_mode='same')(v)
+        v = Convolution2D(1, 1, 1, border_mode='same')(v)
         v = GlobalAveragePooling2D()(v)
+        v = BroadcastDim(self.num_actions)(v)
 
         a = Convolution2D(256, fc_kernel_size, fc_kernel_size, border_mode='same')(x)
         a = LeakyReLU()(a)

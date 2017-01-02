@@ -8,3 +8,4 @@ venv
 MANIFEST
 dist/
 output/
+*.h5

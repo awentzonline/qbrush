@@ -11,7 +11,7 @@ from qbrush.agent import QAgent
 
 class EtchASketchAgent(QAgent):
     def build_model(self):
-        kernel_size = 3
+        kernel_size = 5
         # input: position, canvas, target
         p = position_in = Input(shape=self.position_shape)
         canvas_in = Input(shape=self.canvas_shape)
@@ -109,12 +109,12 @@ class EtchASketchFCAdvantageAgent(EtchASketchAgent):
         # dueling advantage learning
         v = Convolution2D(256, fc_kernel_size, fc_kernel_size, border_mode='same')(x)
         v = LeakyReLU()(v)
-        v = Convolution2D(self.num_actions, fc_kernel_size, fc_kernel_size, border_mode='same')(v)
+        v = Convolution2D(self.num_actions, 1, 1, border_mode='same')(v)
         v = GlobalAveragePooling2D()(v)
 
         a = Convolution2D(256, fc_kernel_size, fc_kernel_size, border_mode='same')(x)
         a = LeakyReLU()(a)
-        a = Convolution2D(self.num_actions, fc_kernel_size, fc_kernel_size, border_mode='same')(a)
+        a = Convolution2D(self.num_actions, 1, 1, border_mode='same')(a)
         a = GlobalAveragePooling2D()(a)
         a = AdvantageAggregator()(a)
 

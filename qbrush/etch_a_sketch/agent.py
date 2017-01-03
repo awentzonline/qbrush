@@ -93,7 +93,7 @@ class EtchASketchAdvantageAgent(EtchASketchAgent):
         )
 
 
-class EtchASketchFCAdvantageAgent(EtchASketchAgent):
+class EtchASketchFCAdvantageAgent(EtchASketchAdvantageAgent):
     '''Fully-convolutional advantage agent'''
     def build_model(self):
         kernel_size = 5

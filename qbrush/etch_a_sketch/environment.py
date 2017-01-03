@@ -27,8 +27,8 @@ class EtchASketchEnvironment(QBrushEnvironment):
         return np.square(a - b).sum(axis=(1, 2, 3))
 
     def update_canvas_error(self):
-        canvas_features = self.get_image_features(self.image_arr)
-        self.canvas_error = self.mse(self.target_features, canvas_features)
+        canvas_features = self.get_image_features(np.random.uniform(0., 255., (1,) + self.image_shape))
+        self.canvas_base_error = self.mse(self.target_features, canvas_features)
 
     def reset(self):
         super(EtchASketchEnvironment, self).reset()
@@ -98,7 +98,7 @@ class EtchASketchEnvironment(QBrushEnvironment):
             reward[err < self.last_err] = 1.
         self.last_err = err
         if self.terminal:
-            err_ratio = self.canvas_error / (err + 1e-7)
+            err_ratio = self.canvas_base_error / (err + 1e-7)
             updates = err_ratio * 100.
             updates[err_ratio < 1] = -50.
             reward += updates

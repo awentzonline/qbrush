@@ -122,16 +122,14 @@ class EtchASketchLifetimeRewardEnvironment(EtchASketchEnvironment):
         return self.lifetime >= self.config.learn_steps
 
     def reward(self):
-        canvas_features = self.get_image_features(self.image_arr)
-        err = mse(self.target_features, canvas_features)
         reward = np.array([-1.] * self.num_actors).astype(np.float32)
-        if not self.last_err is None:
-            reward[err < self.last_err] = 1.
-        self.last_err = err
         is_terminal = self.is_terminal()
         if is_terminal.any():
+            canvas_features = self.get_image_features(self.image_arr)
+            err = mse(self.target_features, canvas_features)
             err_ratio = self.canvas_base_error / (err + 1e-7)
-            updates = err_ratio * 100.
+            updates = err_ratio * self.config.learn_steps
             updates[err_ratio < 1] = -50.
+            print updates
             reward[is_terminal] += updates
         return reward

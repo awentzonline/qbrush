@@ -50,12 +50,12 @@ class QAgent(object):
                 state, new_q = self.get_training_batch(batch_size)
                 self.model.train_on_batch(state, new_q, verbose=True)
 
-    def train_step(self, s, a, r, s1):
+    def train_step(self, s, a, r, s1, t):
         q0 = self.q(s)
         q1 = self.q(s1)
         max_q1 = np.max(q1, axis=1)
         new_q = np.copy(q0)
-        new_q[np.arange(new_q.shape[0]), a] = r + self.discount * max_q1
+        new_q[np.arange(new_q.shape[0]), a] = r + t * self.discount * max_q1
         return self.model.train_on_batch(s, new_q)
 
     def get_training_batch(self, size):

@@ -8,13 +8,15 @@ from PIL import Image
 from qbrush import image_preprocessors
 from qbrush.etch_a_sketch.agent import (
     EtchASketchAgent, EtchASketchAdvantageAgent, EtchASketchFCAdvantageAgent)
-from qbrush.etch_a_sketch.environment import EtchASketchEnvironment
+from qbrush.etch_a_sketch.environment import (
+    EtchASketchEnvironment, EtchASketchLifetimeRewardEnvironment)
 from qbrush.image_dataset import ImageDataset
+from qbrush.trainer import Trainer
 
 
 if __name__ == '__main__':
-    agent_class = EtchASketchFCAdvantageAgent #EtchASketchAdvantageAgent  #EtchASketchAgent
-    environment_class = EtchASketchEnvironment
+    agent_class =  EtchASketchAdvantageAgent  #EtchASketchAgent  #
+    environment_class = EtchASketchEnvironment  #EtchASketchLifetimeRewardEnvironment  #
     # get config
     arg_parser = argparse.ArgumentParser('QBrush')
     environment_class.add_to_arg_parser(arg_parser)
@@ -46,7 +48,7 @@ if __name__ == '__main__':
     config.channels = image_dataset.num_channels
     #target_image.save('grey_input.jpg')
     print('creating environment')
-    environment = environment_class(config, num_canvases=config.num_canvases)
+    environment = environment_class(config, num_actors=config.num_canvases)
     print('creating agent')
     agent = agent_class(
         environment.image_shape, environment.num_actions, discount=config.discount,
@@ -55,6 +57,7 @@ if __name__ == '__main__':
     print('simulating...')
     epsilon = config.epsilon
     d_epsilon = 1. / (config.episodes * config.epochs) * config.epsilon
+    trainer = Trainer(config)
     for epoch_i in range(config.epochs):
         print('epoch {}'.format(epoch_i))
         for episode_i in range(config.episodes):
@@ -62,19 +65,19 @@ if __name__ == '__main__':
             environment.update_targets(
                 image_dataset.get_batch(config.num_canvases)
             )
-            history = environment.simulate(
-                agent, epsilon=epsilon, train_p=0.5, max_steps=config.learn_steps
+            history = trainer.train(
+                agent, environment, epsilon=epsilon, train_p=0.5,
+                max_steps=config.learn_steps
             )
             print('Loss: min: {} mean: {} max: {}'.format(
                 np.min(history), np.mean(history), np.max(history)
             ))
             if (episode_i + 1) % config.save_rate == 0:
                 agent.save_model()
-            environment.reset()
             epsilon = max(config.min_epsilon, epsilon - d_epsilon)
-        environment.simulate(
-            agent, epsilon=config.min_epsilon, train_p=0.,
+        trainer.train(
+            agent, environment, epsilon=config.min_epsilon, train_p=0.,
             max_steps=config.sim_steps
         )
-        environment.save_image_state('epoch_{}.png'.format(epoch_i))
+        environment.save_canvas_state('epoch_{}.png'.format(epoch_i))
         environment.reset()

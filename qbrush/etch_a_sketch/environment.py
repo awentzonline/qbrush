@@ -7,6 +7,7 @@ from PIL import Image, ImageDraw
 
 from qbrush.environment import QBrushEnvironment
 from qbrush.image_utils import save_image_array_grid
+from qbrush.np_objectives import mse
 
 
 class EtchASketchEnvironment(QBrushEnvironment):
@@ -21,19 +22,18 @@ class EtchASketchEnvironment(QBrushEnvironment):
     def update_targets(self, target_images):
         self.target_images = target_images
         self.target_features = self.get_image_features(target_images)
-        self.update_canvas_error()
+        self.update_canvas_base_error()
 
-    def mse(self, a, b):
-        return np.square(a - b).sum(axis=(1, 2, 3))
+    def update_canvas_base_error(self):
+        canvas_features = self.get_image_features(
+            np.random.uniform(0., 255., (1,) + self.image_shape)
+        )
+        self.canvas_base_error = mse(self.target_features, canvas_features)
 
-    def update_canvas_error(self):
-        canvas_features = self.get_image_features(np.random.uniform(0., 255., (1,) + self.image_shape))
-        self.canvas_base_error = self.mse(self.target_features, canvas_features)
-
-    def reset(self):
-        super(EtchASketchEnvironment, self).reset()
-        self.position = np.random.uniform(0., 1., (self.num_canvases, 2))
-        self.position_maps = np.zeros((self.num_canvases,) + self.image_shape_dims)
+    def setup(self):
+        super(EtchASketchEnvironment, self).setup()
+        self.position = np.random.uniform(0., 1., (self.num_actors, 2))
+        self.position_maps = np.zeros((self.num_actors,) + self.image_shape_dims)
         self.last_err = None
 
     def perform_move_up(self, canvas_id):
@@ -90,18 +90,13 @@ class EtchASketchEnvironment(QBrushEnvironment):
             samples = np.concatenate([pms, self.image_arr + 120.], axis=0)
             save_image_array_grid(samples, 'positions.png')
 
-    def calculate_reward(self):
+    def reward(self):
         canvas_features = self.get_image_features(self.image_arr)
-        err = np.square(self.target_features - canvas_features).sum(axis=(1, 2, 3))
-        reward = np.array([-1.] * self.num_canvases).astype(np.float32)
+        err = mse(self.target_features, canvas_features)
+        reward = np.array([-1.] * self.num_actors).astype(np.float32)
         if not self.last_err is None:
             reward[err < self.last_err] = 1.
         self.last_err = err
-        if self.terminal:
-            err_ratio = self.canvas_base_error / (err + 1e-7)
-            updates = err_ratio * 100.
-            updates[err_ratio < 1] = -50.
-            reward += updates
         return reward
 
     @classmethod
@@ -109,3 +104,34 @@ class EtchASketchEnvironment(QBrushEnvironment):
         super(EtchASketchEnvironment, cls).add_to_arg_parser(parser)
         parser.add_argument('--position-decay', type=float, default=0.8)
         parser.add_argument('--color', default='white')
+
+
+class EtchASketchLifetimeRewardEnvironment(EtchASketchEnvironment):
+    def setup(self):
+        super(EtchASketchLifetimeRewardEnvironment, self).setup()
+        self.lifetime = np.zeros((self.num_actors,))
+
+    def reset_actor(self, actor_i):
+        super(EtchASketchLifetimeRewardEnvironment, self).reset_actor(actor_i)
+        self.lifetime[actor_i] = 0.
+
+    def post_action(self, info):
+        self.lifetime += 1.
+
+    def is_terminal(self):
+        return self.lifetime >= self.config.learn_steps
+
+    def reward(self):
+        canvas_features = self.get_image_features(self.image_arr)
+        err = mse(self.target_features, canvas_features)
+        reward = np.array([-1.] * self.num_actors).astype(np.float32)
+        if not self.last_err is None:
+            reward[err < self.last_err] = 1.
+        self.last_err = err
+        is_terminal = self.is_terminal()
+        if is_terminal.any():
+            err_ratio = self.canvas_base_error / (err + 1e-7)
+            updates = err_ratio * 100.
+            updates[err_ratio < 1] = -50.
+            reward[is_terminal] += updates
+        return reward

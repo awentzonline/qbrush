@@ -3,6 +3,7 @@ from keras.layers import Layer
 
 
 class AdvantageAggregator(Layer):
+    '''https://arxiv.org/pdf/1511.06581.pdf'''
     def call(self, inputs, mask=None):
         v = inputs[0]
         a = inputs[1]

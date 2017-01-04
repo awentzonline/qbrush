@@ -70,7 +70,7 @@ class EtchASketchAdvantageAgent(EtchASketchAgent):
         v = Dense(256)(x)
         v = Dropout(0.3)(v)
         v = LeakyReLU()(v)
-        v = Dense(self.num_actions)(v)
+        v = Dense(1)(v)
 
         a = Dense(256)(x)
         a = Dropout(0.3)(a)

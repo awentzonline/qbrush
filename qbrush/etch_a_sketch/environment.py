@@ -5,12 +5,12 @@ from keras.models import Model
 from keras.preprocessing.image import img_to_array
 from PIL import Image, ImageDraw
 
-from qbrush.environment import QBrushEnvironment
+from qbrush.environment import QCanvasEnvironment
 from qbrush.image_utils import save_image_array_grid
 from qbrush.np_objectives import mse
 
 
-class EtchASketchEnvironment(QBrushEnvironment):
+class EASEnvironment(QCanvasEnvironment):
     actions = [
         'move_up',
         'move_down',
@@ -31,10 +31,15 @@ class EtchASketchEnvironment(QBrushEnvironment):
         self.canvas_base_error = mse(self.target_features, canvas_features)
 
     def setup(self):
-        super(EtchASketchEnvironment, self).setup()
+        super(EASEnvironment, self).setup()
         self.position = np.random.uniform(0., 1., (self.num_actors, 2))
         self.position_maps = np.zeros((self.num_actors,) + self.image_shape_dims)
-        self.last_err = None
+        self.last_canvas_err = None
+
+    def reset_actor(self, actor_i):
+        super(EASEnvironment, self).reset_actor(actor_i)
+        self.position[actor_i] = np.random.uniform(0, 1., (2,))
+        self.position_maps[actor_i] = np.zeros(self.image_shape_dims)
 
     def perform_move_up(self, canvas_id):
         self._perform_move(canvas_id, 0., -self.move_size)
@@ -94,30 +99,58 @@ class EtchASketchEnvironment(QBrushEnvironment):
         canvas_features = self.get_image_features(self.image_arr)
         err = mse(self.target_features, canvas_features)
         reward = np.array([-1.] * self.num_actors).astype(np.float32)
-        if not self.last_err is None:
-            reward[err < self.last_err] = 1.
-        self.last_err = err
+        if not self.last_canvas_err is None:
+            reward[err < self.last_canvas_err] = 1.
+        self.last_canvas_err = err
         return reward
 
     @classmethod
     def add_to_arg_parser(cls, parser):
-        super(EtchASketchEnvironment, cls).add_to_arg_parser(parser)
+        super(EASEnvironment, cls).add_to_arg_parser(parser)
         parser.add_argument('--position-decay', type=float, default=0.8)
         parser.add_argument('--color', default='white')
 
 
-class EtchASketchLifetimeRewardEnvironment(EtchASketchEnvironment):
+class EASFlawlessRunEnvironment(EASEnvironment):
+    is_training = False
+
     def setup(self):
-        super(EtchASketchLifetimeRewardEnvironment, self).setup()
-        self.lifetime = np.zeros((self.num_actors,))
+        super(EASFlawlessRunEnvironment, self).setup()
+        self._is_terminal = np.array([False] * self.num_actors)
+        self.last_canvas_err = np.array([np.inf] * self.num_actors)
+        self.non_training_terminals = np.array([False] * self.num_actors)
 
     def reset_actor(self, actor_i):
-        super(EtchASketchLifetimeRewardEnvironment, self).reset_actor(actor_i)
-        self.lifetime[actor_i] = 0.
+        super(EASFlawlessRunEnvironment, self).reset_actor(actor_i)
+        self.last_canvas_err[actor_i] = np.inf
 
     def post_action(self, info):
-        self.lifetime += 1.
+        super(EASFlawlessRunEnvironment, self).post_action(info)
+        canvas_features = self.get_image_features(self.image_arr)
+        canvas_err = mse(self.target_features, canvas_features)
+        self._is_terminal = canvas_err >= self.last_canvas_err
+        self.last_canvas_err = canvas_err
 
+    def is_terminal(self):
+        if not self.is_training:
+            return self.non_training_terminals
+        return self._is_terminal
+
+    def reward(self):
+        reward = self._is_terminal * 2. - 1.
+        return reward
+
+    @classmethod
+    def add_to_arg_parser(cls, parser):
+        super(EASFlawlessRunEnvironment, cls).add_to_arg_parser(parser)
+        parser.add_argument('--term-margin', type=float, default=np.inf)
+
+
+class EASSingleLifetimeRewardEnvironment(EASEnvironment):
+    '''Gives a single large update at the end.
+
+    The reward is scaled relative to the baseline error of a random canvas.
+    '''
     def is_terminal(self):
         return self.lifetime >= self.config.learn_steps
 

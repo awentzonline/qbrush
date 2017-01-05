@@ -16,18 +16,18 @@ from qbrush.trainer import Trainer
 
 if __name__ == '__main__':
     agent_class =  EtchASketchAdvantageAgent  #EtchASketchAgent  #EtchASketchFCAdvantageAgent  #
-    environment_class = EASFlawlessRunEnvironment  #EASSingleLifetimeRewardEnvironment  #EASEnvironment  #
+    environment_class = EASFlawlessRunEnvironment
     # get config
     arg_parser = argparse.ArgumentParser('QBrush')
     environment_class.add_to_arg_parser(arg_parser)
     arg_parser.add_argument('target_glob')
     arg_parser.add_argument('--discount', type=float, default=0.95)
-    arg_parser.add_argument('--episodes', type=int, default=5)
+    arg_parser.add_argument('--episodes', type=int, default=1)
     arg_parser.add_argument('--epsilon', type=float, default=1.0)
     arg_parser.add_argument('--min-epsilon', type=float, default=0.05)
     arg_parser.add_argument('--epochs', type=int, default=50)
-    arg_parser.add_argument('--sim-steps', type=int, default=300)
-    arg_parser.add_argument('--learn-steps', type=int, default=100)
+    arg_parser.add_argument('--sim-steps', type=int, default=250)
+    arg_parser.add_argument('--learn-steps', type=int, default=500)
     arg_parser.add_argument('--num-canvases', type=int, default=3)
     arg_parser.add_argument('--output-path', type=str, default='./output')
     arg_parser.add_argument('--ignore-existing', action='store_true')
@@ -60,6 +60,7 @@ if __name__ == '__main__':
     trainer = Trainer(config)
     for epoch_i in range(config.epochs):
         print('epoch {}'.format(epoch_i))
+        environment.is_training = True
         for episode_i in range(config.episodes):
             print('episode {}.{} / epsilon = {}'.format(epoch_i, episode_i, epsilon))
             environment.update_targets(
@@ -75,6 +76,7 @@ if __name__ == '__main__':
             if (episode_i + 1) % config.save_rate == 0:
                 agent.save_model()
             epsilon = max(config.min_epsilon, epsilon - d_epsilon)
+        environment.is_training = False
         trainer.train(
             agent, environment, epsilon=config.min_epsilon, train_p=0.,
             max_steps=config.sim_steps

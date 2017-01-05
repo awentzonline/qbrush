@@ -21,14 +21,14 @@ class Environment(object):
         self.setup()
 
     def setup(self):
-        pass
+        self.lifetime = np.zeros((self.num_actors,))
 
     def reset(self):
         for i in range(self.num_actors):
             self.reset_actor(i)
 
     def reset_actor(self, actor_i):
-        pass
+        self.lifetime[actor_i] = 0.
 
     def step(self, action):
         info = {}
@@ -56,7 +56,7 @@ class Environment(object):
             getattr(self, 'perform_{}'.format(action_name))(actor_i)
 
     def post_action(self, info):
-        pass
+        self.lifetime += 1.
 
     def get_state(self):
         return []
@@ -76,9 +76,10 @@ class Environment(object):
         pass
 
 
-class QBrushEnvironment(Environment):
+class QCanvasEnvironment(Environment):
 
     def setup(self):
+        super(QCanvasEnvironment, self).setup()
         self._prepare_vgg()
         # create blank canvases
         if self.config.channels == 3:
@@ -89,6 +90,7 @@ class QBrushEnvironment(Environment):
         self.image_arr = np.zeros((self.num_actors,) + self.image_shape)
 
     def reset_actor(self, actor_i):
+        super(QCanvasEnvironment, self).reset_actor(actor_i)
         self.canvases[actor_i] = Image.new(
             self.canvas_mode, self.image_size, self.config.blank_color
         )
@@ -143,6 +145,7 @@ class QBrushEnvironment(Environment):
         return self.vgg_features.predict(images)
 
     def post_action(self, info):
+        super(QCanvasEnvironment, self).post_action(info)
         self.update_image_array()
 
     def get_state(self):

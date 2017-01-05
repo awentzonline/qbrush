@@ -20,7 +20,7 @@ if __name__ == '__main__':
     # get config
     arg_parser = argparse.ArgumentParser('QBrush')
     environment_class.add_to_arg_parser(arg_parser)
-    arg_parser.add_argument('target_image')
+    arg_parser.add_argument('target_glob')
     arg_parser.add_argument('--discount', type=float, default=0.95)
     arg_parser.add_argument('--episodes', type=int, default=5)
     arg_parser.add_argument('--epsilon', type=float, default=1.0)
@@ -36,8 +36,8 @@ if __name__ == '__main__':
     config = arg_parser.parse_args()
 
 
-    print('loading images from {}'.format(config.target_image))
-    image_dataset = ImageDataset(config.target_image, preprocessors=[
+    print('loading images from {}'.format(config.target_glob))
+    image_dataset = ImageDataset(config.target_glob, preprocessors=[
         image_preprocessors.greyscale,
         #image_preprocessors.rgb,
         image_preprocessors.resize((config.width, config.height))

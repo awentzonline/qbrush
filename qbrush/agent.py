@@ -56,7 +56,7 @@ class QAgent(object):
         q1 = self.q(s1, train=True)
         max_q1 = np.max(q1, axis=1)
         new_q = np.copy(q0)
-        new_q[np.arange(new_q.shape[0]), a] = r + t * self.discount * max_q1
+        new_q[np.arange(new_q.shape[0]), a] = r + np.logical_not(t) * self.discount * max_q1
         return self.model.train_on_batch(s, new_q)
 
     def train_target_model(self, tau=0.001):

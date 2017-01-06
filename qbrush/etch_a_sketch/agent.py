@@ -35,10 +35,10 @@ class EtchASketchAgent(QAgent):
         y = Dropout(0.3)(y)
         y = LeakyReLU()(y)
         y = Dense(self.num_actions)(y)
-        self.model = Model([position_in, canvas_in, target_in], y)
-        optimizer = RMSprop(lr=0.0000625, rho=0.99, clipnorm=10.)
-        self.model.compile(optimizer=optimizer, loss='mse')
-        print self.model.summary()
+        model = Model([position_in, canvas_in, target_in], y)
+        optimizer = RMSprop(lr=0.000625, rho=0.99, clipnorm=10.)
+        model.compile(optimizer=optimizer, loss='mse')
+        return model
 
     @property
     def position_shape(self):

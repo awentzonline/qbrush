@@ -15,7 +15,9 @@ class QAgent(object):
 
     def setup_model(self):
         if self.ignore_existing or not self.try_load_model():
-            self.build_model()
+            self.model = self.build_model()
+            self.target_model = self.build_model()
+        print self.model.summary()
 
     def build_model(self):
         pass
@@ -24,6 +26,7 @@ class QAgent(object):
         filename = self.model_filename
         if os.path.exists(filename):
             self.model = load_model(filename, custom_objects=self.model_custom_objects())
+            self.target_model = load_model(filename, custom_objects=self.model_custom_objects())
             return True
         return False
 
@@ -41,31 +44,24 @@ class QAgent(object):
         q = self.q(states)
         return np.argmax(q, axis=1)
 
-    def q(self, states):
-        return self.model.predict(states)
-
-    def train_epoch(self, num_epochs, num_batches_per_epoch=100, batch_size=32):
-        for epoch_i in range(num_epochs):
-            for batch_i in tqdm(num_batches_per_epoch):
-                state, new_q = self.get_training_batch(batch_size)
-                self.model.train_on_batch(state, new_q, verbose=True)
+    def q(self, states, train=False):
+        if train:
+            model = self.target_model
+        else:
+            model = self.model
+        return model.predict(states)
 
     def train_step(self, s, a, r, s1, t):
-        q0 = self.q(s)
-        q1 = self.q(s1)
+        q0 = self.q(s, train=True)
+        q1 = self.q(s1, train=True)
         max_q1 = np.max(q1, axis=1)
         new_q = np.copy(q0)
         new_q[np.arange(new_q.shape[0]), a] = r + t * self.discount * max_q1
         return self.model.train_on_batch(s, new_q)
 
-    def get_training_batch(self, size):
-        state, action, reward, next_state = self.sample_memory(size)
-        expected_q = self.q(states)  # TODO: get both self.q in one call
-        expected_qp = self.q(next_state)
-        max_qp = np.max(expected_qp, axis=1)
-        new_q = np.copy(expected_q)
-        new_q[:, action] = reward + self.discount * max_qp
-        return state, new_q
-
-    def sample_memory(self, size):
-        return (states, actions, rewards, next_state)
+    def train_target_model(self, tau=0.001):
+        actor_weights = self.model.get_weights()
+        actor_target_weights = self.target_model.get_weights()
+        for i in xrange(len(actor_weights)):
+            actor_target_weights[i] = tau * actor_weights[i] + (1 - tau) * actor_target_weights[i]
+        self.target_model.set_weights(actor_target_weights)

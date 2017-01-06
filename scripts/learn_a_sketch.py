@@ -16,7 +16,7 @@ from qbrush.trainer import Trainer
 
 if __name__ == '__main__':
     agent_class =  EtchASketchAdvantageAgent  #EtchASketchAgent  #EtchASketchFCAdvantageAgent  #
-    environment_class = EASFlawlessRunEnvironment  #EASSingleLifetimeRewardEnvironment  #EASEnvironment  #
+    environment_class = EASEnvironment  #EASFlawlessRunEnvironment  #EASSingleLifetimeRewardEnvironment  #
     # get config
     arg_parser = argparse.ArgumentParser('QBrush')
     environment_class.add_to_arg_parser(arg_parser)

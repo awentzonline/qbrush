@@ -60,6 +60,7 @@ class QAgent(object):
         return self.model.train_on_batch(s, new_q)
 
     def train_target_model(self, tau=0.001):
+        '''Good article: https://yanpanlau.github.io/2016/10/11/Torcs-Keras.html'''
         actor_weights = self.model.get_weights()
         actor_target_weights = self.target_model.get_weights()
         for i in xrange(len(actor_weights)):

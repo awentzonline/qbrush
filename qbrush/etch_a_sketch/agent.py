@@ -79,10 +79,10 @@ class EtchASketchAdvantageAgent(EtchASketchAgent):
 
         q = AdvantageAggregator()([v, a])
 
-        self.model = Model([position_in, canvas_in, target_in], q)
+        model = Model([position_in, canvas_in, target_in], q)
         optimizer = RMSprop(lr=0.0000625, rho=0.99, clipnorm=10.)
-        self.model.compile(optimizer=optimizer, loss='mse')
-        print self.model.summary()
+        model.compile(optimizer=optimizer, loss='mse')
+        return model
 
     def model_custom_objects(self, **kwargs):
         return super(EtchASketchAdvantageAgent, self).model_custom_objects(
@@ -129,7 +129,7 @@ class EtchASketchFCAdvantageAgent(EtchASketchAdvantageAgent):
 
         q = AdvantageAggregator()([v, a])
 
-        self.model = Model([position_in, canvas_in, target_in], q)
+        model = Model([position_in, canvas_in, target_in], q)
         optimizer = RMSprop(lr=0.0000625, rho=0.99, clipnorm=10.)
-        self.model.compile(optimizer=optimizer, loss='mse')
-        print self.model.summary()
+        model.compile(optimizer=optimizer, loss='mse')
+        return model

@@ -21,7 +21,7 @@ class Trainer(object):
 
             this_state, reward, terminal, info = environment.step(action)
 
-            if last_state and train_p and (reward.any() >= 0. or np.random.uniform(0., 1.) < train_p):
+            if last_state and train_p and (terminal.any() or reward.any() >= 0. or np.random.uniform(0., 1.) < train_p):
                 loss = agent.train_step(last_state, action, reward, this_state, terminal)
                 agent.train_target_model()
                 history.append(loss)

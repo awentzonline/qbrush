@@ -163,6 +163,5 @@ class EASSingleLifetimeRewardEnvironment(EASEnvironment):
             err_ratio = self.canvas_base_error / (err + 1e-7)
             updates = err_ratio * self.config.learn_steps
             updates[err_ratio < 1] = -50.
-            print updates
             reward[is_terminal] += updates
         return reward

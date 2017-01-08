@@ -26,12 +26,21 @@ class Trainer(object):
             this_state, reward, terminal, info = self.environment.step(action)
             rewards.append(reward)
 
-            if last_state and train_p and (terminal.any() or reward.any() >= 0. or np.random.uniform(0., 1.) < train_p):
-                loss = self.agent.train_step(last_state, action, reward, this_state, terminal)
+            if last_state:
+                self.memory.add((last_state, action, reward, this_state, terminal))
+            if self.memory.size > 100 and np.random.uniform(0., 1.) < train_p:
+                losses = self.train_from_memory()
                 self.agent.train_target_model()
-                history.append(loss)
+                history += losses
 
             last_state = this_state
             if np.random.uniform(0., 1.) < 0.1:
                 self.environment.save_canvas_state('output.png')
         return history, rewards
+
+    def train_from_memory(self, num_batches=1):
+        full_history = []
+        for i in range(num_batches):
+            for s, a, r, s2, t in self.memory.sample(num_batches):
+                full_history.append(self.agent.train_step(s, a, r, s2, t))
+        return full_history

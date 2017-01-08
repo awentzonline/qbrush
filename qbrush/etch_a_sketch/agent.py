@@ -19,24 +19,25 @@ class EtchASketchAgent(QAgent):
         target_in = Input(shape=self.canvas_shape)
         merged_inputs = merge([position_in, canvas_in, target_in], mode='concat')
 
+        base_filters = 32
         x = Convolution2D(
-            32, kernel_size, kernel_size, subsample=(2, 2), border_mode='same')(merged_inputs)
+            base_filters, kernel_size, kernel_size, subsample=(2, 2), border_mode='same')(merged_inputs)
         x = LeakyReLU()(x)
         x = Convolution2D(
-            64, kernel_size, kernel_size, subsample=(2, 2), border_mode='same')(x)
+            base_filters * 2, kernel_size, kernel_size, subsample=(2, 2), border_mode='same')(x)
         x = LeakyReLU()(x)
         x = Convolution2D(
-            128, kernel_size, kernel_size, subsample=(2, 2), border_mode='same')(x)
+            base_filters * 4, kernel_size, kernel_size, subsample=(2, 2), border_mode='same')(x)
         x = LeakyReLU()(x)
         y = x = Flatten()(x)
         # combine
         #y = merge([p, x], mode='concat')
-        y = Dense(256)(y)
+        y = Dense(base_filters * 8)(y)
         y = Dropout(0.3)(y)
         y = LeakyReLU()(y)
         y = Dense(self.num_actions)(y)
         model = Model([position_in, canvas_in, target_in], y)
-        optimizer = RMSprop(lr=0.000625, rho=0.99, clipnorm=10.)
+        optimizer = RMSprop(lr=0.0000625, rho=0.99, clipnorm=10.)
         model.compile(optimizer=optimizer, loss='mse')
         return model
 
@@ -56,23 +57,24 @@ class EtchASketchAdvantageAgent(EtchASketchAgent):
         canvas_in = Input(shape=self.canvas_shape)
         target_in = Input(shape=self.canvas_shape)
         merged_inputs = merge([position_in, canvas_in, target_in], mode='concat')
+        base_filters = 32
         x = Convolution2D(
-            32, kernel_size, kernel_size, subsample=(2, 2), border_mode='same')(merged_inputs)
+            base_filters, kernel_size, kernel_size, subsample=(2, 2), border_mode='same')(merged_inputs)
         x = LeakyReLU()(x)
         x = Convolution2D(
-            64, kernel_size, kernel_size, subsample=(2, 2), border_mode='same')(x)
+            base_filters * 2, kernel_size, kernel_size, subsample=(2, 2), border_mode='same')(x)
         x = LeakyReLU()(x)
         x = Convolution2D(
-            128, kernel_size, kernel_size, subsample=(2, 2), border_mode='same')(x)
+            base_filters * 4, kernel_size, kernel_size, subsample=(2, 2), border_mode='same')(x)
         x = LeakyReLU()(x)
         x = Flatten()(x)
         # dueling advantage learning
-        v = Dense(256)(x)
+        v = Dense(base_filters * 8)(x)
         v = Dropout(0.3)(v)
         v = LeakyReLU()(v)
         v = Dense(1)(v)
 
-        a = Dense(256)(x)
+        a = Dense(base_filters * 8)(x)
         a = Dropout(0.3)(a)
         a = LeakyReLU()(a)
         a = Dense(self.num_actions)(a)
@@ -106,23 +108,24 @@ class EtchASketchFCAdvantageAgent(EtchASketchAdvantageAgent):
             ImageNetMean()(canvas_in),
             ImageNetMean()(target_in)
         ], mode='concat')
+        base_filters = 32
         x = Convolution2D(
-            32, kernel_size, kernel_size, subsample=(2, 2), border_mode='same')(merged_inputs)
+            base_filters, kernel_size, kernel_size, subsample=(2, 2), border_mode='same')(merged_inputs)
         x = LeakyReLU()(x)
         x = Convolution2D(
-            64, kernel_size, kernel_size, subsample=(2, 2), border_mode='same')(x)
+            base_filters * 2, kernel_size, kernel_size, subsample=(2, 2), border_mode='same')(x)
         x = LeakyReLU()(x)
         x = Convolution2D(
-            128, kernel_size, kernel_size, subsample=(2, 2), border_mode='same')(x)
+            base_filters * 4, kernel_size, kernel_size, subsample=(2, 2), border_mode='same')(x)
         x = LeakyReLU()(x)
         fc_kernel_size = kernel_size
         # dueling advantage learning
-        v = Convolution2D(256, fc_kernel_size, fc_kernel_size, border_mode='same')(x)
+        v = Convolution2D(base_filters * 8, fc_kernel_size, fc_kernel_size, border_mode='same')(x)
         v = LeakyReLU()(v)
         v = Convolution2D(1, 1, 1, border_mode='same')(v)
         v = GlobalAveragePooling2D()(v)
 
-        a = Convolution2D(256, fc_kernel_size, fc_kernel_size, border_mode='same')(x)
+        a = Convolution2D(base_filters * 8, fc_kernel_size, fc_kernel_size, border_mode='same')(x)
         a = LeakyReLU()(a)
         a = Convolution2D(self.num_actions, 1, 1, border_mode='same')(a)
         a = GlobalAveragePooling2D()(a)

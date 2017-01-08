@@ -3,11 +3,10 @@ from tqdm import tqdm
 
 
 class Trainer(object):
-    def __init__(self, config, agent, environment, memory):
+    def __init__(self, config, agent, environment):
         self.config = config
         self.agent = agent
         self.environment = environment
-        self.memory = memory
 
     def train(self, max_steps=1000, epsilon=0.5, train_p=0.0):
         last_state = None

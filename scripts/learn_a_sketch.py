@@ -11,7 +11,8 @@ from qbrush.etch_a_sketch.agent import (
 from qbrush.etch_a_sketch.environment import (
     EASEnvironment, EASFlawlessRunEnvironment, EASSingleLifetimeRewardEnvironment)
 from qbrush.image_dataset import ImageDataset
-from qbrush.trainer import Trainer
+from qbrush.memory import Memory
+from qbrush.memory_trainer import Trainer
 
 
 if __name__ == '__main__':
@@ -33,6 +34,7 @@ if __name__ == '__main__':
     arg_parser.add_argument('--ignore-existing', action='store_true')
     arg_parser.add_argument('--model-name', default='eas_agent')
     arg_parser.add_argument('--save-rate', type=int, default=10)
+    arg_parser.add_argument('--memory', type=int, default=1500)
     config = arg_parser.parse_args()
 
 
@@ -57,7 +59,8 @@ if __name__ == '__main__':
     print('simulating...')
     epsilon = config.epsilon
     d_epsilon = 1. / (config.episodes * config.epochs) * config.epsilon
-    trainer = Trainer(config)
+    memory = Memory(config.memory)
+    trainer = Trainer(config, agent, environment, memory)
     for epoch_i in range(config.epochs):
         print('epoch {}'.format(epoch_i))
         for episode_i in range(config.episodes):
@@ -65,19 +68,22 @@ if __name__ == '__main__':
             environment.update_targets(
                 image_dataset.get_batch(config.num_canvases)
             )
-            history = trainer.train(
-                agent, environment, epsilon=epsilon, train_p=0.5,
-                max_steps=config.learn_steps
+            history, rewards = trainer.train(
+                epsilon=epsilon, train_p=1.0, max_steps=config.learn_steps
             )
-            print('Loss: min: {} mean: {} max: {}'.format(
-                np.min(history), np.mean(history), np.max(history)
-            ))
+            if history:
+                print('Loss: min: {} mean: {} max: {}'.format(
+                    np.min(history), np.mean(history), np.max(history)
+                ))
+            if rewards:
+                print('Rewards: min: {} mean: {} max: {}'.format(
+                    np.min(rewards), np.mean(rewards), np.max(rewards)
+                ))
             if (episode_i + 1) % config.save_rate == 0:
                 agent.save_model()
             epsilon = max(config.min_epsilon, epsilon - d_epsilon)
         trainer.train(
-            agent, environment, epsilon=config.min_epsilon, train_p=0.,
-            max_steps=config.sim_steps
+            epsilon=config.min_epsilon, train_p=0., max_steps=config.sim_steps
         )
         environment.save_canvas_state('epoch_{}.png'.format(epoch_i))
         environment.reset()

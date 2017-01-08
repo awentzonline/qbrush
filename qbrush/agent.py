@@ -17,6 +17,7 @@ class QAgent(object):
         if self.ignore_existing or not self.try_load_model():
             self.model = self.build_model()
             self.target_model = self.build_model()
+            self.train_target_model(tau=1.0)  # copy the random initial weights
         print self.model.summary()
 
     def build_model(self):

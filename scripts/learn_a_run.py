@@ -69,7 +69,7 @@ if __name__ == '__main__':
             history, rewards = trainer.train(
                 epsilon=epsilon, train_p=1.0, max_steps=config.learn_steps
             )
-            if loss:
+            if history:
                 print('Loss: min: {} mean: {} max: {}'.format(
                     np.min(history), np.mean(history), np.max(history)
                 ))

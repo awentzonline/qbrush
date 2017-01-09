@@ -30,6 +30,12 @@ class Environment(object):
     def reset_actor(self, actor_i):
         self.lifetime[actor_i] = 0.
 
+    def reset_terminal_actors(self):
+        terminal_actors = self.is_terminal().nonzero()[0]
+        for i in range(terminal_actors.shape[0]):
+            actor_i = terminal_actors[i]
+            self.reset_actor(actor_i)
+
     def step(self, action):
         info = {}
         self.reset_terminal_actors()
@@ -40,12 +46,6 @@ class Environment(object):
         new_state = self.get_state()
         is_terminal = self.is_terminal()
         return new_state, reward, is_terminal, info
-
-    def reset_terminal_actors(self):
-        terminal_actors = (self.is_terminal() * range(1, self.num_actors + 1)).nonzero()[0]
-        for i in range(terminal_actors.shape[0]):
-            actor_i = terminal_actors[i]
-            self.reset_actor(actor_i)
 
     def pre_action(self, info):
         pass

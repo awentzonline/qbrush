@@ -56,9 +56,8 @@ class QAgent(object):
         q0 = self.q(s, train=True)
         q1 = self.q(s1, train=True)
         max_q1 = np.max(q1, axis=1)
-        new_q = np.copy(q0)
-        new_q[np.arange(new_q.shape[0]), a] = r + np.logical_not(t) * self.discount * max_q1
-        return self.model.train_on_batch(s, new_q)
+        q0[np.arange(q0.shape[0]), a] = r + np.logical_not(t) * self.discount * max_q1
+        return self.model.train_on_batch(s, q0)
 
     def train_target_model(self, tau=0.001):
         '''Good article: https://yanpanlau.github.io/2016/10/11/Torcs-Keras.html'''

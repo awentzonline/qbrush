@@ -34,12 +34,13 @@ class EASEnvironment(QCanvasEnvironment):
         super(EASEnvironment, self).setup()
         self.position = np.random.uniform(0., 1., (self.num_actors, 2))
         self.position_maps = np.zeros((self.num_actors,) + self.image_shape_dims)
-        self.last_canvas_err = None
+        self.last_canvas_err = np.array([np.inf] * self.num_actors)
 
     def reset_actor(self, actor_i):
         super(EASEnvironment, self).reset_actor(actor_i)
         self.position[actor_i] = np.random.uniform(0, 1., (2,))
         self.position_maps[actor_i] = np.zeros(self.image_shape_dims)
+        self.last_canvas_err[actor_i] = np.inf
 
     def perform_move_up(self, canvas_id):
         self._perform_move(canvas_id, 0., -self.move_size)
@@ -91,8 +92,8 @@ class EASEnvironment(QCanvasEnvironment):
             axis = -1
             if K.image_dim_ordering() == 'th':
                 axis = 1
-            pms = np.repeat(self._expanded_position_maps(), 3, axis=axis)
-            samples = np.concatenate([pms, self.image_arr + 120.], axis=0)
+            pms = np.repeat(self._expanded_position_maps(), 1, axis=axis)
+            samples = np.concatenate([pms, self.image_arr], axis=0)
             save_image_array_grid(samples, 'positions.png')
 
     def reward(self):
@@ -117,12 +118,7 @@ class EASFlawlessRunEnvironment(EASEnvironment):
     def setup(self):
         super(EASFlawlessRunEnvironment, self).setup()
         self._is_terminal = np.array([False] * self.num_actors)
-        self.last_canvas_err = np.array([np.inf] * self.num_actors)
         self.non_training_terminals = np.array([False] * self.num_actors)
-
-    def reset_actor(self, actor_i):
-        super(EASFlawlessRunEnvironment, self).reset_actor(actor_i)
-        self.last_canvas_err[actor_i] = np.inf
 
     def post_action(self, info):
         super(EASFlawlessRunEnvironment, self).post_action(info)
@@ -137,7 +133,7 @@ class EASFlawlessRunEnvironment(EASEnvironment):
         return self._is_terminal
 
     def reward(self):
-        reward = self._is_terminal * 2. - 1.
+        reward = np.logical_not(self._is_terminal) * 2. - 1.
         return reward
 
     @classmethod

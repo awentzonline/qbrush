@@ -10,7 +10,7 @@ class Memory(object):
         self.max_items = max_items
 
     def add(self, item):
-        if len(self.data) < self.max_items:
+        if self._last_index < self.max_items:
             self.data.append(item)
         else:
             self.data[self.mask(self._last_index)] = item

@@ -11,7 +11,8 @@ from qbrush.etch_a_sketch.agent import (
 from qbrush.etch_a_sketch.environment import (
     EASEnvironment, EASFlawlessRunEnvironment, EASSingleLifetimeRewardEnvironment)
 from qbrush.image_dataset import ImageDataset
-from qbrush.trainer import Trainer
+from qbrush.memory import Memory
+from qbrush.memory_trainer import Trainer
 
 
 if __name__ == '__main__':
@@ -33,6 +34,7 @@ if __name__ == '__main__':
     arg_parser.add_argument('--ignore-existing', action='store_true')
     arg_parser.add_argument('--model-name', default='eas_agent')
     arg_parser.add_argument('--save-rate', type=int, default=10)
+    arg_parser.add_argument('--memory', type=int, default=1500)
     config = arg_parser.parse_args()
 
 
@@ -57,7 +59,8 @@ if __name__ == '__main__':
     print('simulating...')
     epsilon = config.epsilon
     d_epsilon = 1. / (config.episodes * config.epochs) * config.epsilon
-    trainer = Trainer(config, agent, environment)
+    memory = Memory(config.memory)
+    trainer = Trainer(config, agent, environment, memory)
     for epoch_i in range(config.epochs):
         print('epoch {}'.format(epoch_i))
         environment.is_training = True

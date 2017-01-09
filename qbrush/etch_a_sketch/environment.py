@@ -39,7 +39,7 @@ class EASEnvironment(QCanvasEnvironment):
     def reset_actor(self, actor_i):
         super(EASEnvironment, self).reset_actor(actor_i)
         self.position[actor_i] = np.random.uniform(0, 1., (2,))
-        self.position_maps[actor_i] = np.zeros(self.image_shape_dims)
+        self.position_maps[actor_i] = 0.
         self.last_canvas_err[actor_i] = np.inf
 
     def perform_move_up(self, canvas_id):
